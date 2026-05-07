@@ -1918,11 +1918,93 @@ function exportPDF() {
     }
   });
 
+  // ── TARJETA AGENTE (al final, antes de paginar) ──
+  const detailEndY = doc.lastAutoTable?.finalY || 30;
+  const cardH = 42;
+  let cardY;
+  let pageHL = doc.internal.pageSize.getHeight();
+  if (pageHL - detailEndY < cardH + 18) {
+    doc.addPage('a4','landscape');
+    pageHL = doc.internal.pageSize.getHeight();
+    cardY = 22;
+  } else {
+    cardY = detailEndY + 10;
+  }
+  const wL = doc.internal.pageSize.getWidth();
+  const cardX = margin;
+  const cardW = wL - 2*margin;
+
+  // Sombra suave
+  doc.setFillColor(226, 232, 240);
+  doc.roundedRect(cardX+0.6, cardY+0.6, cardW, cardH, 3, 3, 'F');
+  // Card principal
+  doc.setFillColor(248, 250, 252);
+  doc.roundedRect(cardX, cardY, cardW, cardH, 3, 3, 'F');
+  // Stripe lateral jade INS
+  doc.setFillColor(0, 76, 69);
+  doc.rect(cardX, cardY, 3.5, cardH, 'F');
+
+  // Título mini
+  const padX = cardX + 11;
+  doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(100,116,139);
+  doc.text('SU AGENTE DE SEGUROS', padX, cardY + 7);
+  // Nombre
+  doc.setFont('helvetica','bold'); doc.setFontSize(15); doc.setTextColor(15,23,42);
+  doc.text('Fernando Hernandez', padX, cardY + 16);
+  // Subtitulo INS
+  doc.setFont('helvetica','normal'); doc.setFontSize(9.5); doc.setTextColor(0,76,69);
+  doc.text('Agente de Seguros  -  INS', padX, cardY + 22);
+
+  // Línea divisoria sutil
+  doc.setDrawColor(203, 213, 225); doc.setLineWidth(0.2);
+  doc.line(padX, cardY + 25, padX + 70, cardY + 25);
+
+  // Datos en grid 2 columnas
+  doc.setFontSize(8);
+  const col1X = padX;
+  const col2X = padX + 90;
+  const labelColor = [100,116,139];
+  const valColor = [30,41,59];
+
+  const writePair = (x, y, label, value) => {
+    doc.setFont('helvetica','bold'); doc.setTextColor(...labelColor); doc.text(label, x, y);
+    doc.setFont('helvetica','normal'); doc.setTextColor(...valColor);
+    const labelW = doc.getTextWidth(label) + 2;
+    doc.text(value, x + labelW, y);
+  };
+
+  let ly = cardY + 31;
+  writePair(col1X, ly, 'Licencia SUGESE:', '08-1319');
+  writePair(col2X, ly, 'WhatsApp:', '+506 8526-3532');
+  ly += 5;
+  writePair(col1X, ly, 'Codigo INS:', '110129');
+  writePair(col2X, ly, 'Email:', 'fhernandez@segurosdelins.com');
+
+  // Logo INS al extremo derecho — preserva aspect ratio (≈4.23:1, ancho:alto)
+  let logoRightEdge = cardX + cardW - 8;
+  try {
+    const insImg = document.querySelector('.logo-icon img');
+    if (insImg && insImg.complete && insImg.naturalWidth) {
+      const logoH = 11;
+      const ratio = insImg.naturalWidth / insImg.naturalHeight;
+      const logoW = logoH * ratio;
+      const logoX = cardX + cardW - logoW - 8;
+      const logoY = cardY + (cardH - logoH) / 2 - 2;
+      doc.addImage(insImg, 'PNG', logoX, logoY, logoW, logoH);
+      logoRightEdge = logoX;
+    }
+  } catch(e) {}
+
+  // Web a la izquierda del logo
+  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(0,76,69);
+  doc.text('www.seguros-ins.com', logoRightEdge - 4, cardY + cardH - 5, {align:'right'});
+
+  // ── Paginación al pie ──
   const totalPages = doc.internal.getNumberOfPages();
   for (let p=1;p<=totalPages;p++) {
     doc.setPage(p);
     const w = doc.internal.pageSize.getWidth();
-    doc.setFontSize(7.5); doc.setTextColor(148,163,184);
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(148,163,184);
     doc.text(`Poliza 0101 ${polizaActiva} - Seguros del INS - Pagina ${p} de ${totalPages}`, w/2, doc.internal.pageSize.getHeight()-8, {align:'center'});
   }
 
