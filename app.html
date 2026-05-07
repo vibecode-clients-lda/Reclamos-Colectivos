@@ -1808,24 +1808,40 @@ function exportPDF() {
     const cvMonto = document.getElementById('chart-monto');
     const multiMonto = POLIZAS[polizaActiva].montos.length > 1;
     const multiCob = Object.keys(cobMap).length > 1;
+    // Helper para preservar aspect ratio del canvas y centrar dentro de un area
+    const drawChart = (canvas, areaX, areaY, areaW, areaH) => {
+      const cnvRatio = canvas.width / canvas.height; // ancho:alto del canvas
+      let drawW, drawH;
+      if (cnvRatio >= areaW / areaH) {
+        drawW = areaW;
+        drawH = areaW / cnvRatio;
+      } else {
+        drawH = areaH;
+        drawW = areaH * cnvRatio;
+      }
+      const x = areaX + (areaW - drawW) / 2;
+      const yC = areaY + (areaH - drawH) / 2;
+      doc.addImage(canvas.toDataURL('image/png',1.0), 'PNG', x, yC, drawW, drawH);
+    };
+
     if (cvCob && multiMonto && multiCob && cvMonto) {
       const cw = (pageW - 2*margin - 6) / 2;
-      const ch = 58;
+      const ch = 70; // alto disponible (chart redondo + leyenda)
       doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(15,23,42);
       doc.text('Distribucion por Cobertura', margin, y);
       doc.text('Distribucion por Monto', margin + cw + 6, y);
       y += 3;
-      doc.addImage(cvCob.toDataURL('image/png',1.0), 'PNG', margin, y, cw, ch);
-      doc.addImage(cvMonto.toDataURL('image/png',1.0), 'PNG', margin+cw+6, y, cw, ch);
-      y += ch + 8;
+      drawChart(cvCob, margin, y, cw, ch);
+      drawChart(cvMonto, margin + cw + 6, y, cw, ch);
+      y += ch + 6;
     } else if (cvCob && multiCob) {
       const cw = pageW - 2*margin;
-      const ch = 58;
+      const ch = 80;
       doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(15,23,42);
       doc.text('Distribucion por Cobertura', margin, y);
       y += 3;
-      doc.addImage(cvCob.toDataURL('image/png',1.0), 'PNG', margin, y, cw, ch);
-      y += ch + 8;
+      drawChart(cvCob, margin, y, cw, ch);
+      y += ch + 6;
     }
   } catch(e) { y += 4; }
 
