@@ -535,6 +535,9 @@ select.form-input option{background:#fff;}
   </div>
 </div>
 
+<!-- Imagen oculta del logo ACEPO usada por exportPDF -->
+<img id="header-acepo-img" src="acepo-logo.svg" alt="" aria-hidden="true" style="position:absolute;left:-9999px;width:200px;height:200px;">
+
 <div class="layout">
   <!-- SIDEBAR -->
   <nav class="sidebar">
@@ -1760,18 +1763,48 @@ function exportPDF() {
   const col = n => 'c/' + fmtP(n);
 
   // ── HEADER ──
+  const headerH = 38;
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageW, 32, 'F');
+  doc.rect(0, 0, pageW, headerH, 'F');
+
+  // Logo ACEPO (izquierda) e INS (derecha) en el header — sobre fondo blanco redondeado
+  const logoTop = 6, logoH = 16;
+  // ACEPO - usa la SVG renderizada en la página
+  try {
+    const acepoImg = document.querySelector('#header-acepo-img');
+    if (acepoImg && acepoImg.complete && acepoImg.naturalWidth) {
+      const ratio = acepoImg.naturalWidth / acepoImg.naturalHeight;
+      const lW = logoH * ratio;
+      // Fondo blanco para el logo
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(margin, logoTop, lW + 4, logoH + 4, 2, 2, 'F');
+      doc.addImage(acepoImg, 'PNG', margin + 2, logoTop + 2, lW, logoH);
+    }
+  } catch(e) {}
+  // INS (derecha)
+  try {
+    const insImg = document.querySelector('.logo-icon img');
+    if (insImg && insImg.complete && insImg.naturalWidth) {
+      const ratio = insImg.naturalWidth / insImg.naturalHeight;
+      const lW = logoH * ratio;
+      doc.setFillColor(255,255,255);
+      doc.roundedRect(pageW - margin - lW - 4, logoTop, lW + 4, logoH + 4, 2, 2, 'F');
+      doc.addImage(insImg, 'PNG', pageW - margin - lW - 2, logoTop + 2, lW, logoH);
+    }
+  } catch(e) {}
+
+  // Texto principal centrado entre los logos
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
-  doc.setFontSize(15);
-  doc.text(`RECLAMOS COLECTIVOS - Poliza 0101 ${polizaActiva}`, margin, 13);
+  doc.setFontSize(13);
+  doc.text(`RECLAMOS COLECTIVOS - Poliza 0101 ${polizaActiva}`, pageW/2, 14, {align:'center'});
   doc.setFont('helvetica','normal');
-  doc.setFontSize(9);
+  doc.setFontSize(8.5);
   doc.setTextColor(148,163,184);
-  doc.text(`ACEPO - ${polizaNombre}  |  Reporte Anual ${statsYear}`, margin, 21);
-  doc.text('Generado: ' + new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'}), pageW-margin, 21, {align:'right'});
-  y = 42;
+  doc.text('ASOCIACION CULTURAL Y EDUCATIVA PARA LA POLICIA', pageW/2, 21, {align:'center'});
+  doc.setFontSize(7.5);
+  doc.text(`Cedula Juridica: 3-002-056545-34  |  Reporte Anual ${statsYear}  |  Generado: ${new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'})}`, pageW/2, 27, {align:'center'});
+  y = headerH + 8;
 
   // ── RESUMEN ──
   doc.setTextColor(15,23,42);
@@ -1997,7 +2030,6 @@ function exportPDF() {
   writePair(col2X, ly, 'Email:', 'fhernandez@segurosdelins.com');
 
   // Logo INS al extremo derecho — preserva aspect ratio (≈4.23:1, ancho:alto)
-  let logoRightEdge = cardX + cardW - 8;
   try {
     const insImg = document.querySelector('.logo-icon img');
     if (insImg && insImg.complete && insImg.naturalWidth) {
@@ -2005,15 +2037,10 @@ function exportPDF() {
       const ratio = insImg.naturalWidth / insImg.naturalHeight;
       const logoW = logoH * ratio;
       const logoX = cardX + cardW - logoW - 8;
-      const logoY = cardY + (cardH - logoH) / 2 - 2;
+      const logoY = cardY + (cardH - logoH) / 2;
       doc.addImage(insImg, 'PNG', logoX, logoY, logoW, logoH);
-      logoRightEdge = logoX;
     }
   } catch(e) {}
-
-  // Web a la izquierda del logo
-  doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(0,76,69);
-  doc.text('www.seguros-ins.com', logoRightEdge - 4, cardY + cardH - 5, {align:'right'});
 
   // ── Paginación al pie ──
   const totalPages = doc.internal.getNumberOfPages();
