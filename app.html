@@ -535,9 +535,6 @@ select.form-input option{background:#fff;}
   </div>
 </div>
 
-<!-- Imagen oculta del logo ACEPO usada por exportPDF -->
-<img id="header-acepo-img" src="acepo-logo.svg" alt="" aria-hidden="true" style="position:absolute;left:-9999px;width:200px;height:200px;">
-
 <div class="layout">
   <!-- SIDEBAR -->
   <nav class="sidebar">
@@ -1763,48 +1760,21 @@ function exportPDF() {
   const col = n => 'c/' + fmtP(n);
 
   // ── HEADER ──
-  const headerH = 38;
   doc.setFillColor(15, 23, 42);
-  doc.rect(0, 0, pageW, headerH, 'F');
-
-  // Logo ACEPO (izquierda) e INS (derecha) en el header — sobre fondo blanco redondeado
-  const logoTop = 6, logoH = 16;
-  // ACEPO - usa la SVG renderizada en la página
-  try {
-    const acepoImg = document.querySelector('#header-acepo-img');
-    if (acepoImg && acepoImg.complete && acepoImg.naturalWidth) {
-      const ratio = acepoImg.naturalWidth / acepoImg.naturalHeight;
-      const lW = logoH * ratio;
-      // Fondo blanco para el logo
-      doc.setFillColor(255,255,255);
-      doc.roundedRect(margin, logoTop, lW + 4, logoH + 4, 2, 2, 'F');
-      doc.addImage(acepoImg, 'PNG', margin + 2, logoTop + 2, lW, logoH);
-    }
-  } catch(e) {}
-  // INS (derecha)
-  try {
-    const insImg = document.querySelector('.logo-icon img');
-    if (insImg && insImg.complete && insImg.naturalWidth) {
-      const ratio = insImg.naturalWidth / insImg.naturalHeight;
-      const lW = logoH * ratio;
-      doc.setFillColor(255,255,255);
-      doc.roundedRect(pageW - margin - lW - 4, logoTop, lW + 4, logoH + 4, 2, 2, 'F');
-      doc.addImage(insImg, 'PNG', pageW - margin - lW - 2, logoTop + 2, lW, logoH);
-    }
-  } catch(e) {}
-
-  // Texto principal centrado entre los logos
+  doc.rect(0, 0, pageW, 36, 'F');
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
-  doc.setFontSize(13);
-  doc.text(`RECLAMOS COLECTIVOS - Poliza 0101 ${polizaActiva}`, pageW/2, 14, {align:'center'});
+  doc.setFontSize(14);
+  doc.text(`RECLAMOS COLECTIVOS  -  Poliza 0101 ${polizaActiva}`, margin, 13);
   doc.setFont('helvetica','normal');
-  doc.setFontSize(8.5);
+  doc.setFontSize(9);
+  doc.setTextColor(186,195,212);
+  doc.text('ASOCIACION CULTURAL Y EDUCATIVA PARA LA POLICIA', margin, 20);
+  doc.setFontSize(7.8);
   doc.setTextColor(148,163,184);
-  doc.text('ASOCIACION CULTURAL Y EDUCATIVA PARA LA POLICIA', pageW/2, 21, {align:'center'});
-  doc.setFontSize(7.5);
-  doc.text(`Cedula Juridica: 3-002-056545-34  |  Reporte Anual ${statsYear}  |  Generado: ${new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'})}`, pageW/2, 27, {align:'center'});
-  y = headerH + 8;
+  doc.text(`Cedula Juridica: 3-002-056545-34   |   Reporte Anual ${statsYear}`, margin, 26);
+  doc.text('Generado: ' + new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'}), pageW-margin, 26, {align:'right'});
+  y = 44;
 
   // ── RESUMEN ──
   doc.setTextColor(15,23,42);
