@@ -1765,14 +1765,14 @@ function exportPDF() {
   doc.setTextColor(255,255,255);
   doc.setFont('helvetica','bold');
   doc.setFontSize(14);
-  doc.text(`RECLAMOS COLECTIVOS  -  Poliza 0101 ${polizaActiva}`, margin, 13);
+  doc.text(`INFORME RECLAMOS  -  Poliza 0101 ${polizaActiva}`, margin, 13);
   doc.setFont('helvetica','normal');
   doc.setFontSize(9);
   doc.setTextColor(186,195,212);
   doc.text('ASOCIACION CULTURAL Y EDUCATIVA PARA LA POLICIA', margin, 20);
   doc.setFontSize(7.8);
   doc.setTextColor(148,163,184);
-  doc.text(`Cedula Juridica: 3-002-056545-34   |   Reporte Anual ${statsYear}`, margin, 26);
+  doc.text(`Cedula Juridica: 3-002-056545   |   Reporte Anual ${statsYear}`, margin, 26);
   doc.text('Generado: ' + new Date().toLocaleDateString('es-CR',{day:'2-digit',month:'long',year:'numeric'}), pageW-margin, 26, {align:'right'});
   y = 44;
 
