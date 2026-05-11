@@ -51,7 +51,8 @@ const SEED = [
 
 function verifyToken(req) {
   const token = req.headers.get('authorization')?.replace('Bearer ', '');
-  const VALID = Netlify.env.get('ACCESS_PIN') || 'VTM805';
+  const VALID = Netlify.env.get('ACCESS_PIN');
+  if (!VALID) return false; // sin env var no se acepta ningún token (fail-closed)
   return token === btoa(VALID + ':reclamos');
 }
 
