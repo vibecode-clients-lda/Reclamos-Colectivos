@@ -14,11 +14,11 @@ description: >
 
 > Este archivo es **estado vigente**, no un log histórico. Los checkpoints cronológicos viven en `git log` y en la memoria (`~/.claude/projects/.../memory/project_reclamos_colectivos.md`). Actualizar las secciones de abajo cada vez que cambie el estado — no añadir log de commits aquí.
 
-**Última actualización:** 25 abril 2026 — soporte multi-beneficiario en Conciliación (hasta 8 por asegurado)
-**Último commit main:** `7d7bbd7` Conciliacion: soporte multi-beneficiario (hasta 8 por asegurado)
-**Repo GitHub:** https://github.com/jhernandez-vibecode/Reclamos-Colectivos
-**Dominio público:** Netlify auto-deploy desde `main` (URL por confirmar)
-**Pólizas ACEPO (tomador 3002056545):**
+**Última actualización:** 11 mayo 2026 — migración a `vibecode-clients-lda` + tarjeta agente en PDF + header limpio + security fix fallback PIN
+**Último commit main:** `d760883` Seguridad: eliminar fallback hardcoded VTM805, requerir ACCESS_PIN
+**Repo GitHub:** https://github.com/vibecode-clients-lda/Reclamos-Colectivos *(migrado desde `jhernandez-vibecode` el 11 may 2026)*
+**Dominio público:** Netlify site `reclamos-colectivos` (transferida al team `vibecode-clients-lda`) → `reclamos-colectivos.netlify.app`
+**Pólizas ACEPO** (tomador `3-002-056545`):
 - **VTM 805** · Muerte Colectiva Policía · montos fijos ₡2/4/6/8/10M · 34 casos seed (31 de 2025 + 3 de 2026)
 - **VTM 704** · Muerte Fija ₡15M · monto único · 0 casos (sin data aún)
 - **VTM 703** · Muerte Fija ₡400K · monto único · 12 casos seed (2025)
@@ -27,9 +27,9 @@ description: >
 
 ## ESTADO ACTUAL
 
-- **v1.0 en producción** — migrado de Firebase a Netlify Blobs + PIN auth (commit `b17e740`).
-- **Stack**: HTML/CSS/JS vanilla single-file (`app.html` ~1500 líneas) + Netlify Functions v2 ESM + Netlify Blobs (1 store: `reclamos-colectivos`) + Chart.js + jsPDF + pdf.js + SheetJS (xlsx).
-- **Auth por PIN** simple (sin Google OAuth). Token `btoa(PIN + ':reclamos')` guardado en `sessionStorage.rc-token`. Env var `ACCESS_PIN` en Netlify.
+- **v1.5 en producción** en el nuevo team `vibecode-clients-lda` (Blobs preservados via "Transfer site").
+- **Stack**: HTML/CSS/JS vanilla single-file (`app.html` ~1850 líneas) + Netlify Functions v2 ESM + Netlify Blobs (1 store: `reclamos-colectivos`) + Chart.js + jsPDF + pdf.js + SheetJS (xlsx).
+- **Auth por PIN** simple. Token `btoa(PIN + ':reclamos')` guardado en `sessionStorage.rc-token`. **Env var `ACCESS_PIN` obligatoria en Netlify** — fail-closed si no está (auth devuelve 503, reclamos devuelve 401). **NO usar fallback hardcoded** (el viejo `|| 'VTM805'` era leak en repo público).
 - **Demo local** (`hostname === 'localhost' || '127.0.0.1'`) usa `SEED_LOCAL` con 34 casos (31 de 2025 + 3 de 2026) y localStorage como fallback.
 - **Diseño:** Modern SaaS Light Dashboard — sidebar navy `#0f172a`, main `#f8fafc`, acento cyan `#06b6d4`, cards blancas con sombra sutil. Tipografía **Outfit** (títulos) + **DM Sans** (cuerpo). Logo SDI SVG en header (`sdi-logo.svg` copiado de `sdi-portal/assets/brand/logo-compacto.svg`).
 - **Sin Firebase** — todo setUser/firebase auth eliminado. Sólo PIN + Netlify Blobs.
@@ -72,7 +72,7 @@ Badges con fondo pastel + texto saturado. Contador de días ⏱ solo activo en e
 | `compressPdf(file, target)` | ~1210 | pdf.js renderiza cada página a canvas → JPEG → jsPDF reconstruye PDF. 4 intentos progresivos (quality 0.72→0.4, scale 1.5x→0.9x). Prueba real: 8.9 MB → 0.25 MB. |
 | `viewPdf(id)` | ~1190 | Abre pdf-modal con iframe del `reportePago` almacenado. |
 | `renderStats(year)` | ~1134 | Summary cards + 2 charts + top-5. Chart 2 agrupa por monto asegurado exacto (2M/4M/6M/8M/10M/Otro), oculta categorías vacías. |
-| `exportExcel()` / `exportPDF()` | ~1247 / ~1295 | Descarga reportes. PDF usa `c/` prefix en lugar de `₡` (jsPDF Helvetica no soporta U+20A1). Números en `en-US` locale. Incluye pie charts como PNG. |
+| `exportExcel()` / `exportPDF()` | ~1696 / ~1742 | Descarga reportes filtrados por `claimsDePoliza()`. PDF usa `c/` prefix en lugar de `₡`. Números en `en-US` locale. **Header**: "INFORME RECLAMOS - Poliza 0101 VTM XXX" + subtítulo "ASOCIACION CULTURAL Y EDUCATIVA PARA LA POLICIA" + "Cedula Juridica: 3-002-056545". **Página 1 portrait** (resumen+donuts redondos con `drawChart` helper que preserva aspect ratio+top5). **Página 2 landscape** 11 cols con afectado. **Tarjeta agente Fernando Hernández al final** (stripe jade, Licencia SUGESE 08-1319, Código 110129, WhatsApp +506 8526-3532, email `fhernandez@segurosdelins.com`, logo INS proporcional 4.23:1). Sin URL web. |
 
 ### Montos asegurados (dinámicos por póliza activa)
 
@@ -159,6 +159,9 @@ claim = {
 6. **Sin Firebase:** no agregar dependencias Firebase ni librerías pesadas. Stack actual es sólido y rápido.
 7. **Cache headers:** `netlify.toml` ya fuerza `no-cache` en `*.html`. Tras push, instruir al usuario "Ctrl+Shift+R" si no ve cambios — suele ser caché del browser.
 8. **Sesión persiste entre dispositivos:** cualquier persona con el PIN ve los mismos datos (Netlify Blobs compartidos). Si JC comparte el PIN, todos ven/editan lo mismo.
+9. **🔴 NUNCA hardcodear el PIN como fallback** (`Netlify.env.get('ACCESS_PIN') || 'algo'`). Patrón correcto: leer la env var y si no está, devolver 503 (auth) / 401 (data). Repo es público en GitHub.
+10. **`git push` desde sandbox bash falla** porque el credential manager interactivo no funciona. Usar **PowerShell** para commits/push (los creds cacheados sí funcionan ahí).
+11. **PDF gráficos:** usar el helper `drawChart(canvas, areaX, areaY, areaW, areaH)` que preserva aspect ratio del canvas y centra dentro del área. Sin este helper los donuts salen alargados horizontalmente.
 
 ---
 
