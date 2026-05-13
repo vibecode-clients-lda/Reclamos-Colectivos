@@ -1072,7 +1072,6 @@ function saveDemoClaims() {
 
 // ===================== RENDER =====================
 function renderAll() {
-  updateCounts();
   renderCards();
   renderStats(statsYear);
 }
@@ -1082,7 +1081,17 @@ function claimsDePoliza() {
 }
 
 function updateCounts() {
-  const activos = claimsDePoliza();
+  // Los chips respetan año/cobertura/buscador (NO el chip de estado en sí)
+  const year = document.getElementById('filter-year')?.value || 'todos';
+  const cob = document.getElementById('filter-cob')?.value || 'todas';
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  const activos = claimsDePoliza().filter(c => {
+    if (year !== 'todos' && String(c.anno) !== year) return false;
+    if (cob !== 'todas' && c.cobertura !== cob) return false;
+    if (search && !c.nombre.toLowerCase().includes(search) &&
+        !c.numero.includes(search) && !(c.cedula||'').includes(search)) return false;
+    return true;
+  });
   const counts = {Presentado:0,'En Ajuste':0,Pagada:0,Declinado:0,'Apelación':0};
   activos.forEach(c => { if(counts[c.estado]!==undefined) counts[c.estado]++; });
   document.getElementById('cnt-todos').textContent = activos.length;
@@ -1091,10 +1100,12 @@ function updateCounts() {
   document.getElementById('cnt-Pagada').textContent = counts['Pagada'];
   document.getElementById('cnt-Declinado').textContent = counts['Declinado'];
   document.getElementById('cnt-Apelacion').textContent = counts['Apelación'];
-  document.getElementById('nav-count').textContent = activos.length;
+  // El sidebar count sigue contando TODOS los de la póliza (no se ve afectado por filtros)
+  document.getElementById('nav-count').textContent = claimsDePoliza().length;
 }
 
 function renderCards() {
+  updateCounts(); // chips reflejan los filtros año/cobertura/buscador actuales
   const grid = document.getElementById('claims-grid');
   const search = document.getElementById('search-input').value.toLowerCase();
   const year = document.getElementById('filter-year').value;
