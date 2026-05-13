@@ -14,8 +14,8 @@ description: >
 
 > Este archivo es **estado vigente**, no un log histórico. Los checkpoints cronológicos viven en `git log` y en la memoria (`~/.claude/projects/.../memory/project_reclamos_colectivos.md`). Actualizar las secciones de abajo cada vez que cambie el estado — no añadir log de commits aquí.
 
-**Última actualización:** 11 mayo 2026 — migración a `vibecode-clients-lda` + tarjeta agente en PDF + header limpio + security fix fallback PIN
-**Último commit main:** `d760883` Seguridad: eliminar fallback hardcoded VTM805, requerir ACCESS_PIN
+**Última actualización:** 11 mayo 2026 — fix conteos de chips respetan filtros (post migración + security fix)
+**Último commit main:** `08e2e68` Fix: conteos de chips respetan filtros año/cobertura/buscador
 **Repo GitHub:** https://github.com/vibecode-clients-lda/Reclamos-Colectivos *(migrado desde `jhernandez-vibecode` el 11 may 2026)*
 **Dominio público:** Netlify site `reclamos-colectivos` (transferida al team `vibecode-clients-lda`) → `reclamos-colectivos.netlify.app`
 **Pólizas ACEPO** (tomador `3-002-056545`):
@@ -42,7 +42,7 @@ description: >
 
 | Sección | Estado | Función |
 |---|---|---|
-| `#section-reclamos` | ✅ estable | Grid de tarjetas + chips filtro estado + buscador + filtros año/cobertura. Tarjeta muestra: caso, mes/año, estado badge, nombre, cobertura, cédula, fecha presentación, contador de días, monto. Indicador 📄 si tiene `reportePago` adjunto. |
+| `#section-reclamos` | ✅ estable | Grid de tarjetas + chips filtro estado + buscador + filtros año/cobertura. **Los chips muestran el conteo respetando los demás filtros activos** (año/cobertura/buscador) — si filtrás 2026, el chip "Pagada N" cuenta solo las pagadas de 2026. `updateCounts()` se llama desde `renderCards()` para que cualquier cambio en los selects/buscador refresque los chips. Tarjeta muestra: caso, mes/año, estado badge, nombre, cobertura, cédula, fecha presentación, contador de días, monto. Indicador 📄 si tiene `reportePago` adjunto. |
 | `#section-estadisticas` | ✅ estable | Tabs año 2025/2026/2027, 4 stat-cards, 2 doughnut charts (por cobertura + por monto asegurado), tabla top-5 montos. Botones "Descargar Excel" y "Descargar PDF". |
 | `#claim-modal` | ✅ estable | Alta/edición: zona carga PDF auto-fill + form completo (asegurado + **afectado** opcional con vínculo editable) + "Reporte de Pago (Control)" PDF (base64, max 25 MB con compresión automática a <3.5 MB). |
 | `#section-conciliacion` | ✅ estable | Conciliación mensual por póliza. 2 dropzones (Plantilla MAX INS + LISTADO ACEPO). **Plantilla MAX trae 3 hojas: `INCLUSIONES` (altas), `VARIACIONES` (modificaciones de monto/beneficiario), `EXCLUSIONES` (bajas)** + catálogos `Cantón`/`Distrito` (ignorar). Detecta los 4 tipos de movimientos. Export Excel respaldo (`Conciliacion_VTMxxx_MES_AAAA.xlsx`) con 5 hojas (Resumen + 4 categorías). Botón Limpiar. NO persiste — todo en memoria. Formato detectado automáticamente del nombre del archivo (póliza, mes, año). |
